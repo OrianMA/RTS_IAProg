@@ -10,6 +10,8 @@ public class PlayerGroup : MonoBehaviour
     public float radiusSphereDetection;
     public LayerMask layerMaskDetection;
 
+    SpecialZone specialZone;
+
     private void Start()
     {
         foreach (PlayerController controller in soldierController)
@@ -38,39 +40,39 @@ public class PlayerGroup : MonoBehaviour
 
             // Lancer un ray depuis la position de l'écran
             Ray ray = mainCamera.ScreenPointToRay(touchPosition);
-            RaycastHit hit;
 
-            // Vérifier si le ray touche un objet avec un Collider
-            if (Physics.Raycast(ray, out hit))
+            if (Physics.SphereCast(ray, radiusSphereDetection, out RaycastHit sphereHit, Mathf.Infinity))
             {
-                // Afficher la position dans le monde
-                //agent.nextPosition = hit.point;
-                foreach (PlayerController controller in soldierController) {
-                
-                    controller.agent.SetDestination(hit.point);
-                }
-                DetectPoint(hit.point);
-                //agent.Move(hit.point);
-                //agent.Move(hit.point);
-                //agent.SetPath();
-                // Tu peux utiliser hit.point pour manipuler les données de la position sur la carte
-            }
-        }
-    }
 
-
-    public void DetectPoint(Vector3 point)
-    {
-        RaycastHit hit;
-        if (Physics.SphereCast(point, radiusSphereDetection, Vector3.forward, out hit, layerMaskDetection))
-        {
-            SpecialZone specialZone = hit.collider.GetComponent<SpecialZone>();
-            for (int i = 0; i < specialZone.soldierPos.Count; i++) {
-                if (i < soldierController.Count)
+                foreach (PlayerController controller in soldierController)
                 {
-                    soldierController[i].agent.SetDestination(specialZone.soldierPos[i].position);
-                    specialZone.soldierAssign.Add(soldierController[i]);
-                    specialZone.OnActive();
+                    controller.agent.SetDestination(sphereHit.point);
+                }
+
+
+                if (sphereHit.collider.gameObject.layer == LayerMask.NameToLayer("SpecialZone"))
+                {
+                    SpecialZone newSpecialZone = sphereHit.collider.GetComponent<SpecialZone>();
+
+                    newSpecialZone.soldierAssign.Clear();
+                    if (specialZone != null)
+                        specialZone.soldierAssign.Clear();
+
+                    specialZone = newSpecialZone;
+
+                    for (int i = 0; i < specialZone.soldierPos.Count; i++)
+                    {
+                        if (i < soldierController.Count)
+                        {
+                            soldierController[i].agent.SetDestination(specialZone.soldierPos[i].position);
+                            specialZone.soldierAssign.Add(soldierController[i]);
+                            specialZone.OnActive();
+                        }
+                    }
+                } else
+                {
+                    specialZone.soldierAssign.Clear();
+                    specialZone.isActive = false;
                 }
             }
         }

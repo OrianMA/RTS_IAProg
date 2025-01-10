@@ -6,7 +6,6 @@ public class RessourcesRecolter : SpecialZone
     public ItemType ItemType;
     public float ressourceDelay;
     public int ressourceNumber;
-    bool isActive;
 
     float timePass;
     public override void OnActive()
